@@ -6,6 +6,9 @@
 #include "TextureManager.h"
 #include <SFML/Graphics.hpp>
 
+extern std::map<char, std::string> m_tokens;
+
+
 enum TileType 
 {
     Horyzontal = 0, 
@@ -24,6 +27,9 @@ enum TileType
 /// @brief descriptor of tile.
 class Tiles
 {
+public:
+    sf::RenderTexture* m_renderTexture = nullptr;
+    sf::Sprite m_sprite[2];
 private:
     std::string m_tiles;
     void SetHoryzontal();
@@ -43,7 +49,8 @@ public:
     std::string GetTiles();
     char GetTile(int x, int y);
     void MakeEnd();
-    void PlaceTocken(char i);
+    void RemoveToken();
+    void PlaceToken(char i);
 };
 
 
@@ -59,6 +66,7 @@ private:
     int m_pxHeight;
     int m_totalwidth;
     int m_totalheight;
+    uint8_t m_tokenCounter = 0;
     Tiles* m_tiles;
     std::string m_map;
     sf::Sprite m_MapStrip[900];
@@ -72,8 +80,10 @@ public:
     int GetTotalHeigt(){return m_totalheight;};
     int GetPxWidth(){ return m_pxWidth;};   ///< Return the width in pixels of the map.
     int GetPxHeight(){ return m_pxHeight;}; ///< Return the height in pixels of the map.
+    int GetTokenCounter(void){ return m_tokenCounter;}; ///< Returns the number of tokens left.
     sf::Sprite& GetStripe(int x, int y);    ///< a strip in of a position x, y in the tile grid.
     char GetTile(int x, int y);         ///< get te tile as character.
+    void SetTile(int x, int y, char c); ///< set the tile as character.
     void MoveTilesLeft(int x);          ///< Move the tiles to the left.
     void MoveTilesRight(int x);         ///< Move the tiles to the right.
     void MoveTilesDown(int i);          ///< Move the tiles down.

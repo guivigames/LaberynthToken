@@ -5,7 +5,7 @@
 #include <vector>
 
 //typedef std::pair<std::string, std::string> pair;
-static std::map<char, std::string> m_tokens;
+std::map<char, std::string> m_tokens;
 
 /// TILES MEMBER FUNCTIONS ////////////////////////////////////////
 void Tiles::SetHoryzontal(){m_tiles = "###XXX###";};
@@ -19,9 +19,12 @@ void Tiles::SetTopRight(){  m_tiles = "###XX##X#";};
 void Tiles::SetBottomLeft(){m_tiles = "#X##XX###";};
 void Tiles::SetBottomRight(){m_tiles = "#X#XX####";};
 void Tiles::MakeEnd(){m_tiles[4] = 'Z';};
-void Tiles::PlaceTocken(char i){ m_tiles[4] = ('A' + i);};
+void Tiles::RemoveToken(){ m_tiles[4] = 'X';};
+void Tiles::PlaceToken(char i){ m_tiles[4] = ('A' + i);};
 Tiles::Tiles()
 {
+    m_renderTexture = new sf::RenderTexture();
+
     m_tokens['A'] = "bag.png";
     m_tokens['B'] = "book.png";
     m_tokens['C'] = "brain.png";
@@ -87,7 +90,8 @@ GameMap::GameMap()
     m_totalheight   = m_height*3;   ///< number of tiles on height.
     m_pxWidth   = m_width * 16;     ///< Width of the map in pixels.
     m_pxHeight  = m_height *16;     ///< height of the map in piels.
-    
+    m_tokenCounter = 0;
+
     CreateTiles();
     CreateMap();
 }
@@ -103,13 +107,14 @@ GameMap::~GameMap()
 void GameMap::CreateTiles()
 {
     srand(time(nullptr));
-    
+    m_tokenCounter = 0;
     m_tiles = new Tiles[m_width * m_height];
 
     for (int i = 0; i < m_width * m_height; i++){
         m_tiles[i].Set( (TileType)(rand() % 10));
         if (rand() % 100 < 20){
-            m_tiles[i].PlaceTocken(rand()%m_tokens.size());
+            m_tokenCounter++;
+            m_tiles[i].PlaceToken(rand()%m_tokens.size());
         }
     }
     m_tiles[(m_width * m_height) -1].MakeEnd();
@@ -128,7 +133,13 @@ void GameMap::CreateMap()
                     m_map += m_tiles[(h * m_width) + w].GetTile(x, y);
                     char cell = m_tiles[(h * m_width) + w].GetTile(x, y);
                     if ( cell >= 'A' &&  cell < ('A' + m_tokens.size())){
-                        m_MapStrip[m_map.size()-1].setTexture( TextureManager::GetTexture( m_tokens[ cell]), true);//_texture.getTexture());
+                        m_tiles[(h * m_width) + w].m_renderTexture->create(16, 16);
+                        m_tiles[(h * m_width) + w].m_sprite[0].setTexture(TextureManager::GetTexture("maps.png"));
+                        m_tiles[(h * m_width) + w].m_sprite[0].setTextureRect(sf::IntRect( 0, 32, 16, 16));
+                        m_tiles[(h * m_width) + w].m_renderTexture->draw(m_tiles[(h * m_width) + w].m_sprite[0]);
+                        m_tiles[(h * m_width) + w].m_sprite[1].setTexture(TextureManager::GetTexture( m_tokens[ cell]));
+                        m_tiles[(h * m_width) + w].m_renderTexture->draw(m_tiles[(h * m_width) + w].m_sprite[1]);
+                        m_MapStrip[m_map.size()-1].setTexture( m_tiles[(h * m_width) + w].m_renderTexture->getTexture(), true);//_texture.getTexture());
                         //printf("%c", cell);
                     }
                     else {
@@ -166,6 +177,17 @@ char GameMap::GetTile(int x, int y)
         return m_map[(y * m_totalwidth) + x];
     }
     else return '?';
+}
+
+/// @brief Gets the chracte of the specific tile
+void GameMap::SetTile(int x, int y, char c)
+{
+    if (x < m_totalwidth && x < m_totalheight)
+    {
+        m_tiles[((y/3) * m_width) + (x/3)].RemoveToken();
+        if (m_tokenCounter > 0) m_tokenCounter--;
+        CreateMap();
+    }
 }
 
 /// @brief Move the specific row one section left

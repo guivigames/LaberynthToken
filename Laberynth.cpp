@@ -246,7 +246,9 @@ int main()
 
             for (vCell.y = vAreaTL.y; vCell.y <= vAreaBR.y; vCell.y++){
                 for (vCell.x = vAreaTL.x; vCell.x <= vAreaBR.x; vCell.x++){
-                    char cr =_map->GetTile( vCell.x, vCell.y);
+                    unsigned char cr =_map->GetTile( vCell.x, vCell.y);
+                    //printf("%c\r\n", cr);
+                    //printf("%d\r\n", m_tokens.size());
                     if (cr == '#'){
                         sf::Vector2f vNearestPoint;
                         vNearestPoint.x = std::max( (float)vCell.x, std::min(vPotentilPos.x, (float)vCell.x+1));
@@ -262,6 +264,21 @@ int main()
                             vPotentilPos.y = vPotentilPos.y - (vRayToNearest.y/fMag)*fOverlap;
                         }
                     }
+                    else if((int)cr >= (int)'A' &&  (int)cr < ((int)'A' + m_tokens.size())){
+                        sf::Vector2f vNearestPoint;
+                        vNearestPoint.x = std::max( (float)vCell.x, std::min(vPotentilPos.x, (float)vCell.x+1));
+                        vNearestPoint.y = std::max( (float)vCell.y, std::min(vPotentilPos.y, (float)vCell.y+1));
+
+                        sf::Vector2f vRayToNearest = vNearestPoint - vPotentilPos;
+                        float fMag = pow(pow(vRayToNearest.x, 2)+pow(vRayToNearest.y, 2), 0.5);
+                        float fOverlap = fRadius - fMag;
+                        if (std::isnan(fOverlap)) fOverlap = 0;
+                        if (fOverlap > 0)
+                        {
+                            //printf("On token\r\n");
+                            _map->SetTile( vCell.x, vCell.y, 'X');
+                        }
+                    }
                 }
             }
             if (vPotentilPos.x > 0 && vPotentilPos.x < _map->GetTotalWidth())
@@ -270,7 +287,7 @@ int main()
                 _playerOne->SetPos( { _playerOne->GetPos().x, vPotentilPos.y});//- _playerOne.fRadius;
 
             if (circleRect(_playerOne->GetPos().x+0.5, _playerOne->GetPos().y+0.5, 0.5, 
-            _map->GetTotalWidth()-1, _map->GetTotalHeigt()-1, 1, 1))
+            _map->GetTotalWidth()-1, _map->GetTotalHeigt()-1, 1, 1) && _map->GetTokenCounter() == 0)
                 isGameOver = true;
         }
 
